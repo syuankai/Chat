@@ -3,104 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VIP 加密通訊系統</title>
+    <title>ULTRA VIP TERMINAL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', system-ui, sans-serif; background: #09090b; color: #fafafa; }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .msg-container { height: calc(100vh - 180px); overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;900&display=swap');
+        
+        body { font-family: 'Inter', system-ui, sans-serif; background: #000; color: #fff; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* 動態背景 */
+        .bg-gradient {
+            background: radial-gradient(circle at 50% -20%, #1e3a8a 0%, #000 70%);
+        }
+
+        /* 訊息容器美化 */
+        .msg-container { 
+            height: calc(100vh - 180px); 
+            overflow-y: auto; 
+            scrollbar-width: none; 
+            scroll-behavior: smooth;
+        }
         .msg-container::-webkit-scrollbar { display: none; }
-        .my-msg { background: #2563eb; border-bottom-right-radius: 4px; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2); }
-        .other-msg { background: #27272a; border-bottom-left-radius: 4px; }
-        .hidden { display: none !important; }
-        #loading-overlay { z-index: 2000; background: #09090b; }
-        input:focus { border-color: #3b82f6; outline: none; }
-        .animate-pop { animation: pop 0.3s cubic-bezier(0.26, 0.53, 0.74, 1.48) forwards; }
-        @keyframes pop { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+
+        /* 氣泡樣式 */
+        .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .my-msg { background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-radius: 20px 20px 4px 20px; box-shadow: 0 10px 20px rgba(29, 78, 216, 0.3); }
+        .other-msg { background: #18181b; border-radius: 20px 20px 20px 4px; border: 1px solid rgba(255,255,255,0.05); }
+
+        /* 動畫 */
+        @keyframes msg-pop {
+            0% { opacity: 0; transform: scale(0.9) translateY(20px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-msg { animation: msg-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+        /* 圖片自適應 */
+        .chat-img { max-width: 100%; border-radius: 12px; margin-top: 8px; cursor: pointer; transition: transform 0.2s; }
+        .chat-img:hover { transform: scale(1.02); }
     </style>
 </head>
-<body class="overflow-hidden">
+<body class="bg-gradient overflow-hidden">
 
-    <!-- 加載遮罩 -->
-    <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center">
-        <div class="flex flex-col items-center gap-4">
-            <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <p class="text-[10px] font-mono tracking-widest text-zinc-500 uppercase">System Initializing</p>
+    <!-- 加載層 -->
+    <div id="loader" class="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center">
+        <div class="relative w-20 h-20">
+            <div class="absolute inset-0 border-4 border-blue-500/20 rounded-full"></div>
+            <div class="absolute inset-0 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
+        <p class="mt-6 font-mono text-blue-500 text-xs tracking-[0.5em] animate-pulse uppercase">Link Establishing</p>
     </div>
 
     <!-- 登入介面 -->
-    <div id="login-page" class="fixed inset-0 flex items-center justify-center p-6 hidden">
-        <div class="glass w-full max-w-sm p-8 rounded-[2.5rem] text-center shadow-2xl animate-pop">
-            <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-blue-600/20 rotate-6">
-                <i class="fa-solid fa-ghost text-white text-2xl"></i>
+    <div id="login-page" class="fixed inset-0 z-50 flex items-center justify-center p-6 hidden">
+        <div class="glass-card w-full max-w-sm p-10 rounded-[3rem] text-center shadow-2xl">
+            <div class="mb-8">
+                <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto shadow-2xl shadow-blue-500/40 rotate-12 mb-4">
+                    <i class="fa-solid fa-crown text-white text-2xl"></i>
+                </div>
+                <h1 class="text-3xl font-black italic tracking-tighter">VIP TERMINAL</h1>
+                <p class="text-zinc-500 text-[9px] uppercase tracking-[0.4em] font-bold mt-2">Next-Gen Communication</p>
             </div>
-            <h1 class="text-2xl font-black mb-1 italic tracking-tight">VAULT ACCESS</h1>
-            <p class="text-zinc-500 text-[10px] mb-8 uppercase tracking-[0.3em] font-bold">Secure Instant Messaging</p>
             
             <div class="space-y-4">
-                <!-- Google 登入 -->
-                <button onclick="loginWithGoogle()" class="w-full bg-white text-black font-bold py-3.5 rounded-xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg text-sm">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="18" height="18">
-                    使用 Google 帳號
+                <!-- Google 登入按鈕 (修正圖示連結) -->
+                <button onclick="loginWithGoogle()" class="w-full bg-white text-black font-black py-4 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all text-sm shadow-md">
+                    <svg width="20" height="20" viewBox="0 0 48 48">
+                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                    </svg>
+                    Google 快速登入
                 </button>
 
-                <div class="flex items-center gap-3 py-2">
-                    <div class="flex-1 h-[1px] bg-white/5"></div>
-                    <span class="text-[9px] text-zinc-600 font-bold uppercase">或使用匿名身分</span>
-                    <div class="flex-1 h-[1px] bg-white/5"></div>
+                <div class="flex items-center gap-4 py-2 opacity-30">
+                    <div class="flex-1 h-[1px] bg-white"></div>
+                    <span class="text-[10px] font-bold uppercase text-white">OR</span>
+                    <div class="flex-1 h-[1px] bg-white"></div>
                 </div>
 
-                <!-- 帳號登入 -->
                 <div class="space-y-2">
-                    <input type="text" id="username" placeholder="代號 (Username)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm focus:ring-1 focus:ring-blue-500">
-                    <input type="password" id="password" placeholder="密碼 (Password)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm focus:ring-1 focus:ring-blue-500">
-                    <button onclick="handleAuth()" class="w-full bg-zinc-100 hover:bg-white text-black font-black py-3 rounded-xl active:scale-95 transition-all text-sm">
-                        確認登入
+                    <input type="text" id="username" placeholder="暱稱" class="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm focus:border-blue-500 transition-all outline-none">
+                    <input type="password" id="password" placeholder="存取密碼" class="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm focus:border-blue-500 transition-all outline-none">
+                    <button onclick="handleAuth()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-xl active:scale-95 transition-all shadow-lg shadow-blue-500/20">
+                        匿名登入
                     </button>
                 </div>
 
-                <!-- 試用按鈕 -->
-                <button onclick="startGuestSession()" class="w-full text-zinc-500 hover:text-zinc-300 font-bold py-2 rounded-xl active:scale-95 transition-all text-[11px] underline underline-offset-4 decoration-zinc-800">
-                    訪客試用 (不儲存紀錄)
+                <button onclick="startGuestSession()" class="text-zinc-500 text-xs font-bold hover:text-blue-400 transition-colors pt-2 italic">
+                    <i class="fa-solid fa-bolt mr-1"></i> 直接試用模式
                 </button>
             </div>
-            <p id="error-msg" class="text-red-500 text-[10px] mt-4 hidden font-bold"></p>
+            <p id="error-msg" class="text-red-500 text-[10px] mt-4 hidden font-bold uppercase"></p>
         </div>
     </div>
 
     <!-- 聊天主介面 -->
     <div id="chat-app" class="h-screen flex flex-col hidden">
-        <header class="p-4 border-b border-white/5 flex justify-between items-center glass">
-            <div class="flex items-center gap-3">
+        <header class="p-5 flex justify-between items-center glass-card border-none rounded-b-3xl mx-2 mt-2 shadow-2xl">
+            <div class="flex items-center gap-4">
                 <div class="relative">
-                    <img id="user-avatar" class="w-10 h-10 rounded-full border border-white/10" src="">
-                    <span id="guest-tag" class="hidden absolute -top-1 -right-1 bg-orange-500 text-[7px] text-white px-1 rounded-full font-black">GUEST</span>
+                    <img id="user-avatar" class="w-12 h-12 rounded-2xl border-2 border-white/10 object-cover" src="">
+                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-4 border-black"></div>
                 </div>
                 <div>
-                    <h2 class="text-sm font-black tracking-tight uppercase">VIP Private Channel</h2>
-                    <p id="user-name-display" class="text-[10px] font-mono text-blue-500 font-bold"></p>
+                    <h2 class="text-sm font-black tracking-tight uppercase" id="room-name">Global Encrypted Channel</h2>
+                    <div class="flex items-center gap-2">
+                        <span id="user-name-display" class="text-[10px] font-mono text-blue-500 font-bold"></span>
+                        <span id="guest-tag" class="hidden bg-orange-500 text-[7px] text-white px-1.5 rounded-full font-black">GUEST</span>
+                    </div>
                 </div>
             </div>
-            <button onclick="handleSignOut()" class="w-9 h-9 rounded-full hover:bg-white/5 flex items-center justify-center transition-colors text-zinc-500">
-                <i class="fa-solid fa-power-off text-sm"></i>
+            <button onclick="handleSignOut()" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-red-500/20 hover:text-red-500 flex items-center justify-center transition-all text-zinc-500">
+                <i class="fa-solid fa-power-off"></i>
             </button>
         </header>
 
-        <main id="msg-list" class="flex-1 p-5 space-y-6 msg-container"></main>
+        <main id="msg-list" class="flex-1 p-6 space-y-8 msg-container"></main>
 
-        <footer class="p-4 glass border-t border-white/5 pb-10">
-            <div class="max-w-4xl mx-auto flex items-end gap-3">
-                <div class="flex-1">
-                    <textarea id="msg-input" rows="1" class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-4 outline-none focus:border-blue-500 transition-all resize-none max-h-32 text-sm" placeholder="輸入通訊訊息..."></textarea>
+        <footer class="p-4 mb-4">
+            <div class="max-w-4xl mx-auto glass-card rounded-[2rem] p-2 flex items-end gap-2 shadow-2xl">
+                <div class="flex-1 relative">
+                    <textarea id="msg-input" rows="1" class="w-full bg-transparent p-4 pr-12 outline-none resize-none max-h-40 text-sm text-white" placeholder="傳送加密訊息..."></textarea>
+                    <button onclick="toggleImageInput()" class="absolute right-4 top-4 text-zinc-500 hover:text-blue-400">
+                        <i class="fa-solid fa-image"></i>
+                    </button>
                 </div>
-                <button onclick="sendMsg()" class="bg-blue-600 text-white w-14 h-14 rounded-2xl flex items-center justify-center active:scale-90 transition-all shadow-xl shadow-blue-600/20">
-                    <i class="fa-solid fa-paper-plane"></i>
+                <button onclick="sendMsg()" class="bg-blue-600 text-white w-14 h-14 rounded-2xl flex items-center justify-center active:scale-90 transition-all shadow-lg shadow-blue-600/30">
+                    <i class="fa-solid fa-paper-plane text-lg"></i>
                 </button>
             </div>
         </footer>
+    </div>
+
+    <!-- 圖片輸入 Modal -->
+    <div id="image-modal" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-6">
+        <div class="glass-card w-full max-w-sm p-8 rounded-3xl animate-msg">
+            <h3 class="font-black mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-image text-blue-500"></i>
+                發送圖片 URL
+            </h3>
+            <input type="text" id="image-url-input" placeholder="https://..." class="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm mb-4 outline-none text-white focus:border-blue-500">
+            <div class="flex gap-2">
+                <button onclick="toggleImageInput()" class="flex-1 py-3 rounded-xl bg-white/5 font-bold hover:bg-white/10 transition-colors">取消</button>
+                <button onclick="sendImage()" class="flex-1 py-3 rounded-xl bg-blue-600 font-bold hover:bg-blue-500 transition-colors shadow-lg shadow-blue-600/30">發送</button>
+            </div>
+        </div>
     </div>
 
     <script type="module">
@@ -108,7 +157,7 @@
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // 你的 Firebase 配置
+        // Firebase 配置
         const firebaseConfig = {
             apiKey: "AIzaSyBi_Js2F0UbFL7VS_bP5ZCgquWPn1f0QUg",
             authDomain: "my-chat-a7162.firebaseapp.com",
@@ -124,149 +173,153 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        let currentUserProfile = null;
+        let currentUser = null;
         let isGuest = false;
 
-        // 監控驗證狀態
+        // 音效
+        const sendSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3');
+        sendSound.volume = 0.2;
+
         onAuthStateChanged(auth, (user) => {
             if (user && !isGuest) {
-                setupUI({
-                    name: user.displayName || "使用者",
+                loginSuccess({
+                    name: user.displayName,
                     photo: user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}&background=random`
                 }, false);
             } else if (!isGuest) {
-                showPage('login-page');
+                document.getElementById('login-page').classList.remove('hidden');
+                document.getElementById('chat-app').classList.add('hidden');
             }
-            document.getElementById('loading-overlay').classList.add('hidden');
+            document.getElementById('loader').classList.add('hidden');
         });
 
-        function showPage(pageId) {
-            document.getElementById('login-page').classList.add('hidden');
-            document.getElementById('chat-app').classList.add('hidden');
-            document.getElementById(pageId).classList.remove('hidden');
-        }
-
-        function setupUI(profile, guestStatus) {
-            currentUserProfile = profile;
-            isGuest = guestStatus;
-            
+        function loginSuccess(profile, guestMode) {
+            currentUser = profile;
+            isGuest = guestMode;
             document.getElementById('user-avatar').src = profile.photo;
             document.getElementById('user-name-display').innerText = `@${profile.name}`;
             document.getElementById('guest-tag').classList.toggle('hidden', !isGuest);
-            
-            showPage('chat-app');
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('chat-app').classList.remove('hidden');
             initChat();
         }
 
         // --- 登入邏輯 ---
-
         window.loginWithGoogle = async () => {
-            try {
-                await signInWithPopup(auth, provider);
-            } catch (error) {
-                console.error(error);
-                alert("Google 登入失敗：請確認網域已在 Firebase 授權網域清單中。");
+            try { 
+                await signInWithPopup(auth, provider); 
+            } catch(e) { 
+                console.error("Google Auth Error:", e);
+                alert("登入失敗，請確認網址已加入 Firebase Authorized domains 清單。"); 
             }
         };
 
         window.handleAuth = async () => {
             const name = document.getElementById('username').value.trim();
             const pass = document.getElementById('password').value.trim();
-            const error = document.getElementById('error-msg');
-            if (!name || !pass) return;
+            const errorEl = document.getElementById('error-msg');
+            if(!name || !pass) return;
 
             try {
                 const userRef = doc(db, "chat_users", name);
-                const userSnap = await getDoc(userRef);
-
-                if (userSnap.exists()) {
-                    if (userSnap.data().password === pass) {
-                        setupUI({ name: name, photo: `https://ui-avatars.com/api/?name=${name}&background=3b82f6&color=fff` }, false);
-                    } else {
-                        error.innerText = "密碼不正確";
-                        error.classList.remove('hidden');
-                    }
+                const snap = await getDoc(userRef);
+                if(snap.exists() && snap.data().password !== pass) {
+                    errorEl.innerText = "ACCESS DENIED: WRONG PASSWORD";
+                    errorEl.classList.remove('hidden');
                 } else {
-                    await setDoc(userRef, { password: pass });
-                    setupUI({ name: name, photo: `https://ui-avatars.com/api/?name=${name}&background=3b82f6&color=fff` }, false);
+                    if(!snap.exists()) await setDoc(userRef, { password: pass });
+                    loginSuccess({ name, photo: `https://ui-avatars.com/api/?name=${name}&background=3b82f6&color=fff` }, false);
                 }
-            } catch (e) {
-                alert("連接資料庫失敗：" + e.message);
-            }
+            } catch(e) { alert("Database Error: " + e.message); }
         };
 
         window.startGuestSession = () => {
-            const gid = Math.floor(Math.random() * 8999) + 1000;
-            const gName = `Guest_${gid}`;
-            setupUI({
-                name: gName,
-                photo: `https://ui-avatars.com/api/?name=${gName}&background=444&color=fff`
-            }, true);
+            const name = "Guest_" + Math.floor(Math.random()*9000+1000);
+            loginSuccess({ name, photo: `https://ui-avatars.com/api/?name=${name}&background=333&color=fff` }, true);
+        };
+
+        window.handleSignOut = () => {
+            if(isGuest) location.reload();
+            else signOut(auth).then(() => location.reload());
         };
 
         // --- 聊天邏輯 ---
-
-        window.handleSignOut = () => {
-            if (isGuest) {
-                location.reload();
-            } else {
-                signOut(auth).then(() => location.reload());
-            }
-        };
-
-        let unsubscribe = null;
+        let lastMsgCount = 0;
         function initChat() {
-            if (unsubscribe) unsubscribe();
             const q = query(collection(db, "messages"), orderBy("time", "asc"));
-            unsubscribe = onSnapshot(q, (snapshot) => {
+            onSnapshot(q, (snapshot) => {
                 const list = document.getElementById('msg-list');
+                const isAtBottom = list.scrollHeight - list.scrollTop <= list.clientHeight + 150;
+                
                 list.innerHTML = '';
-                snapshot.forEach((doc) => {
+                snapshot.forEach(doc => {
                     const data = doc.data();
-                    const isMe = data.user === currentUserProfile.name;
-                    const time = data.time ? new Date(data.time.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+                    const isMe = data.user === currentUser.name;
+                    const time = data.time ? new Date(data.time.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
                     
                     const div = document.createElement('div');
-                    div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-pop`;
+                    div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-msg`;
                     div.innerHTML = `
-                        <div class="flex items-center gap-2 mb-1 px-1">
-                            ${!isMe ? `<span class="text-[9px] font-black text-blue-500 uppercase">${data.user}</span>` : ''}
+                        <div class="flex items-center gap-2 mb-1.5 px-2">
+                            ${!isMe ? `<span class="text-[10px] font-black text-blue-500 uppercase tracking-tighter">${data.user}</span>` : ''}
                             <span class="text-[8px] text-zinc-600 font-mono">${time}</span>
                         </div>
-                        <div class="max-w-[85%] p-3.5 px-5 rounded-2xl ${isMe ? 'my-msg text-white rounded-tr-none' : 'other-msg text-zinc-200 rounded-tl-none border border-white/5 shadow-lg'}">
-                            <p class="text-sm leading-relaxed whitespace-pre-wrap">${data.text}</p>
+                        <div class="max-w-[85%] p-4 px-6 ${isMe ? 'my-msg text-white' : 'other-msg text-zinc-200'}">
+                            ${data.image ? `<img src="${data.image}" class="chat-img" onclick="window.open('${data.image}')">` : ''}
+                            ${data.text ? `<p class="text-sm leading-relaxed whitespace-pre-wrap">${data.text}</p>` : ''}
                         </div>
                     `;
                     list.appendChild(div);
                 });
-                list.scrollTop = list.scrollHeight;
+
+                if (isAtBottom || snapshot.size > lastMsgCount) {
+                    list.scrollTop = list.scrollHeight;
+                }
+                lastMsgCount = snapshot.size;
             });
         }
 
         window.sendMsg = async () => {
             const input = document.getElementById('msg-input');
             const text = input.value.trim();
-            if (!text || !currentUserProfile) return;
-
+            if(!text) return;
             input.value = '';
             input.style.height = 'auto';
             try {
                 await addDoc(collection(db, "messages"), {
-                    user: currentUserProfile.name,
-                    text: text,
+                    user: currentUser.name,
+                    text,
                     time: serverTimestamp()
                 });
-            } catch (e) {
-                console.error("發送失敗", e);
-            }
+                sendSound.play().catch(()=>{});
+            } catch(e) { console.error("Send failed", e); }
         };
 
-        document.getElementById('msg-input').onkeydown = (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+        window.toggleImageInput = () => document.getElementById('image-modal').classList.toggle('hidden');
+        window.sendImage = async () => {
+            const urlInput = document.getElementById('image-url-input');
+            const url = urlInput.value.trim();
+            if(!url) return;
+            try {
+                await addDoc(collection(db, "messages"), {
+                    user: currentUser.name,
+                    image: url,
+                    time: serverTimestamp()
+                });
+                urlInput.value = '';
+                toggleImageInput();
+                sendSound.play().catch(()=>{});
+            } catch(e) { alert("圖片發送失敗"); }
         };
-        document.getElementById('msg-input').oninput = function() {
-            this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';
-        };
+
+        // UI 輔助
+        document.getElementById('msg-input').addEventListener('keydown', (e) => {
+            if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+        });
+        document.getElementById('msg-input').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
     </script>
 </body>
 </html>
