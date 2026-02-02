@@ -24,6 +24,250 @@
 <body class="overflow-hidden">
 
     <!-- 加載遮罩 -->
-    <div id="loading-overlay" class="fixed inset-0 flex items-center justify-
+    <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center">
+        <div class="flex flex-col items-center gap-4">
+            <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-[10px] font-mono tracking-widest text-zinc-500 uppercase">System Initializing</p>
+        </div>
+    </div>
 
-      
+    <!-- 登入介面 -->
+    <div id="login-page" class="fixed inset-0 flex items-center justify-center p-6 hidden">
+        <div class="glass w-full max-w-sm p-8 rounded-[2.5rem] text-center shadow-2xl animate-pop">
+            <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-blue-600/20 rotate-6">
+                <i class="fa-solid fa-ghost text-white text-2xl"></i>
+            </div>
+            <h1 class="text-2xl font-black mb-1 italic tracking-tight">VAULT ACCESS</h1>
+            <p class="text-zinc-500 text-[10px] mb-8 uppercase tracking-[0.3em] font-bold">Secure Instant Messaging</p>
+            
+            <div class="space-y-4">
+                <!-- Google 登入 -->
+                <button onclick="loginWithGoogle()" class="w-full bg-white text-black font-bold py-3.5 rounded-xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg text-sm">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="18" height="18">
+                    使用 Google 帳號
+                </button>
+
+                <div class="flex items-center gap-3 py-2">
+                    <div class="flex-1 h-[1px] bg-white/5"></div>
+                    <span class="text-[9px] text-zinc-600 font-bold uppercase">或使用匿名身分</span>
+                    <div class="flex-1 h-[1px] bg-white/5"></div>
+                </div>
+
+                <!-- 帳號登入 -->
+                <div class="space-y-2">
+                    <input type="text" id="username" placeholder="代號 (Username)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm focus:ring-1 focus:ring-blue-500">
+                    <input type="password" id="password" placeholder="密碼 (Password)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm focus:ring-1 focus:ring-blue-500">
+                    <button onclick="handleAuth()" class="w-full bg-zinc-100 hover:bg-white text-black font-black py-3 rounded-xl active:scale-95 transition-all text-sm">
+                        確認登入
+                    </button>
+                </div>
+
+                <!-- 試用按鈕 -->
+                <button onclick="startGuestSession()" class="w-full text-zinc-500 hover:text-zinc-300 font-bold py-2 rounded-xl active:scale-95 transition-all text-[11px] underline underline-offset-4 decoration-zinc-800">
+                    訪客試用 (不儲存紀錄)
+                </button>
+            </div>
+            <p id="error-msg" class="text-red-500 text-[10px] mt-4 hidden font-bold"></p>
+        </div>
+    </div>
+
+    <!-- 聊天主介面 -->
+    <div id="chat-app" class="h-screen flex flex-col hidden">
+        <header class="p-4 border-b border-white/5 flex justify-between items-center glass">
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <img id="user-avatar" class="w-10 h-10 rounded-full border border-white/10" src="">
+                    <span id="guest-tag" class="hidden absolute -top-1 -right-1 bg-orange-500 text-[7px] text-white px-1 rounded-full font-black">GUEST</span>
+                </div>
+                <div>
+                    <h2 class="text-sm font-black tracking-tight uppercase">VIP Private Channel</h2>
+                    <p id="user-name-display" class="text-[10px] font-mono text-blue-500 font-bold"></p>
+                </div>
+            </div>
+            <button onclick="handleSignOut()" class="w-9 h-9 rounded-full hover:bg-white/5 flex items-center justify-center transition-colors text-zinc-500">
+                <i class="fa-solid fa-power-off text-sm"></i>
+            </button>
+        </header>
+
+        <main id="msg-list" class="flex-1 p-5 space-y-6 msg-container"></main>
+
+        <footer class="p-4 glass border-t border-white/5 pb-10">
+            <div class="max-w-4xl mx-auto flex items-end gap-3">
+                <div class="flex-1">
+                    <textarea id="msg-input" rows="1" class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-4 outline-none focus:border-blue-500 transition-all resize-none max-h-32 text-sm" placeholder="輸入通訊訊息..."></textarea>
+                </div>
+                <button onclick="sendMsg()" class="bg-blue-600 text-white w-14 h-14 rounded-2xl flex items-center justify-center active:scale-90 transition-all shadow-xl shadow-blue-600/20">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // 你的 Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyBi_Js2F0UbFL7VS_bP5ZCgquWPn1f0QUg",
+            authDomain: "my-chat-a7162.firebaseapp.com",
+            projectId: "my-chat-a7162",
+            storageBucket: "my-chat-a7162.firebasestorage.app",
+            messagingSenderId: "940121204402",
+            appId: "1:940121204402:web:edd47e839d2f8fb34a8bab",
+            measurementId: "G-XT2WVPCN9T"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        let currentUserProfile = null;
+        let isGuest = false;
+
+        // 監控驗證狀態
+        onAuthStateChanged(auth, (user) => {
+            if (user && !isGuest) {
+                setupUI({
+                    name: user.displayName || "使用者",
+                    photo: user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}&background=random`
+                }, false);
+            } else if (!isGuest) {
+                showPage('login-page');
+            }
+            document.getElementById('loading-overlay').classList.add('hidden');
+        });
+
+        function showPage(pageId) {
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('chat-app').classList.add('hidden');
+            document.getElementById(pageId).classList.remove('hidden');
+        }
+
+        function setupUI(profile, guestStatus) {
+            currentUserProfile = profile;
+            isGuest = guestStatus;
+            
+            document.getElementById('user-avatar').src = profile.photo;
+            document.getElementById('user-name-display').innerText = `@${profile.name}`;
+            document.getElementById('guest-tag').classList.toggle('hidden', !isGuest);
+            
+            showPage('chat-app');
+            initChat();
+        }
+
+        // --- 登入邏輯 ---
+
+        window.loginWithGoogle = async () => {
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error(error);
+                alert("Google 登入失敗：請確認網域已在 Firebase 授權網域清單中。");
+            }
+        };
+
+        window.handleAuth = async () => {
+            const name = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value.trim();
+            const error = document.getElementById('error-msg');
+            if (!name || !pass) return;
+
+            try {
+                const userRef = doc(db, "chat_users", name);
+                const userSnap = await getDoc(userRef);
+
+                if (userSnap.exists()) {
+                    if (userSnap.data().password === pass) {
+                        setupUI({ name: name, photo: `https://ui-avatars.com/api/?name=${name}&background=3b82f6&color=fff` }, false);
+                    } else {
+                        error.innerText = "密碼不正確";
+                        error.classList.remove('hidden');
+                    }
+                } else {
+                    await setDoc(userRef, { password: pass });
+                    setupUI({ name: name, photo: `https://ui-avatars.com/api/?name=${name}&background=3b82f6&color=fff` }, false);
+                }
+            } catch (e) {
+                alert("連接資料庫失敗：" + e.message);
+            }
+        };
+
+        window.startGuestSession = () => {
+            const gid = Math.floor(Math.random() * 8999) + 1000;
+            const gName = `Guest_${gid}`;
+            setupUI({
+                name: gName,
+                photo: `https://ui-avatars.com/api/?name=${gName}&background=444&color=fff`
+            }, true);
+        };
+
+        // --- 聊天邏輯 ---
+
+        window.handleSignOut = () => {
+            if (isGuest) {
+                location.reload();
+            } else {
+                signOut(auth).then(() => location.reload());
+            }
+        };
+
+        let unsubscribe = null;
+        function initChat() {
+            if (unsubscribe) unsubscribe();
+            const q = query(collection(db, "messages"), orderBy("time", "asc"));
+            unsubscribe = onSnapshot(q, (snapshot) => {
+                const list = document.getElementById('msg-list');
+                list.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const isMe = data.user === currentUserProfile.name;
+                    const time = data.time ? new Date(data.time.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+                    
+                    const div = document.createElement('div');
+                    div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-pop`;
+                    div.innerHTML = `
+                        <div class="flex items-center gap-2 mb-1 px-1">
+                            ${!isMe ? `<span class="text-[9px] font-black text-blue-500 uppercase">${data.user}</span>` : ''}
+                            <span class="text-[8px] text-zinc-600 font-mono">${time}</span>
+                        </div>
+                        <div class="max-w-[85%] p-3.5 px-5 rounded-2xl ${isMe ? 'my-msg text-white rounded-tr-none' : 'other-msg text-zinc-200 rounded-tl-none border border-white/5 shadow-lg'}">
+                            <p class="text-sm leading-relaxed whitespace-pre-wrap">${data.text}</p>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+                list.scrollTop = list.scrollHeight;
+            });
+        }
+
+        window.sendMsg = async () => {
+            const input = document.getElementById('msg-input');
+            const text = input.value.trim();
+            if (!text || !currentUserProfile) return;
+
+            input.value = '';
+            input.style.height = 'auto';
+            try {
+                await addDoc(collection(db, "messages"), {
+                    user: currentUserProfile.name,
+                    text: text,
+                    time: serverTimestamp()
+                });
+            } catch (e) {
+                console.error("發送失敗", e);
+            }
+        };
+
+        document.getElementById('msg-input').onkeydown = (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+        };
+        document.getElementById('msg-input').oninput = function() {
+            this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';
+        };
+    </script>
+</body>
+</html>
+
