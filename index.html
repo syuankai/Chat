@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ULTRA VIP TERMINAL v4.1</title>
+    <title>ULTRA VIP GLOBAL v5.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -11,141 +11,173 @@
         
         body { font-family: 'Noto Sans TC', sans-serif; background: #1e1f22; color: #fff; overflow: hidden; margin: 0; }
         
-        /* 側邊導航動畫 */
+        /* Drawer Logic */
         #side-drawer { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 100; }
         .drawer-open { transform: translateX(0) !important; }
-        .drawer-overlay { background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); transition: opacity 0.3s; }
+        .drawer-overlay { background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); transition: opacity 0.3s; pointer-events: none; opacity: 0; }
+        .overlay-show { pointer-events: auto !important; opacity: 1 !important; }
         
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .msg-bubble { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.6; }
-        .my-msg { background: #5865f2; color: #fff; border-bottom-right-radius: 4px; }
-        .other-msg { background: #2b2d31; color: #dbdee1; border-bottom-left-radius: 4px; }
+        .msg-bubble { max-width: 85%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.5; word-break: break-all; }
+        .my-msg { background: #5865f2; color: #fff; border-bottom-right-radius: 4px; align-self: flex-end; }
+        .other-msg { background: #2b2d31; color: #dbdee1; border-bottom-left-radius: 4px; align-self: flex-start; }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .view-section { position: absolute; inset: 0; background: #313338; display: flex; flex-direction: column; }
         .hidden-view { display: none !important; }
+        
+        .nav-btn.active { background: rgba(88, 101, 242, 0.15); color: #5865f2; border-right: 4px solid #5865f2; }
+        .server-btn.active { background: #5865f2; color: white; border-radius: 12px; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-msg { animation: fadeIn 0.2s ease-out forwards; }
     </style>
 </head>
 <body class="h-screen flex flex-col">
 
     <!-- 加載遮罩 -->
     <div id="loader" class="fixed inset-0 z-[1000] bg-[#0b0b0d] flex flex-col items-center justify-center">
-        <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <p id="loader-text" class="mt-4 font-mono text-blue-500 text-[10px] tracking-[0.5em] animate-pulse uppercase">Connecting to Node</p>
+        <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p class="mt-4 font-mono text-blue-500 text-[10px] tracking-[0.4em] uppercase">Global Syncing...</p>
     </div>
 
     <!-- 登入頁面 -->
     <div id="login-page" class="fixed inset-0 z-[500] bg-[#1e1f22] flex items-center justify-center p-6">
         <div class="w-full max-w-sm space-y-8">
             <div class="text-center">
-                <div class="inline-flex p-4 bg-blue-600 rounded-3xl rotate-12 shadow-2xl shadow-blue-600/30 mb-6">
-                    <i class="fa-solid fa-crown text-3xl text-white"></i>
+                <div class="inline-flex p-4 bg-blue-600 rounded-3xl rotate-12 shadow-2xl mb-4">
+                    <i class="fa-solid fa-globe text-3xl text-white"></i>
                 </div>
                 <h2 class="text-3xl font-black italic">ULTRA VIP</h2>
-                <p class="text-zinc-500 text-xs mt-2 tracking-widest uppercase">Mobile Terminal</p>
+                <p class="text-zinc-500 text-[10px] mt-1 tracking-[0.3em] uppercase">Global Network Entry</p>
             </div>
 
-            <div class="glass p-8 rounded-[2.5rem] space-y-4">
+            <div class="glass p-8 rounded-[2rem] space-y-4">
                 <div class="space-y-2">
-                    <input type="text" id="auth-user" placeholder="名稱" class="w-full bg-black/40 border border-white/5 p-4 rounded-2xl text-sm outline-none focus:border-blue-500">
-                    <input type="password" id="auth-pass" placeholder="密碼" class="w-full bg-black/40 border border-white/5 p-4 rounded-2xl text-sm outline-none focus:border-blue-500">
+                    <input type="text" id="auth-user" placeholder="名稱" class="w-full bg-black/40 border border-white/5 p-4 rounded-xl text-sm outline-none focus:border-blue-500">
+                    <input type="password" id="auth-pass" placeholder="密碼" class="w-full bg-black/40 border border-white/5 p-4 rounded-xl text-sm outline-none focus:border-blue-500">
                 </div>
-                <button onclick="handleManualAuth()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-bold shadow-xl shadow-blue-600/20 active:scale-95 transition-all">
-                    進入系統
-                </button>
-                <button onclick="loginWithGoogle()" class="w-full bg-white text-black font-bold py-4 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all text-sm">
-                    <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" class="w-5 h-5">
-                    Google 登入
-                </button>
-                <button onclick="startGuestSession()" class="w-full text-zinc-500 text-xs font-bold py-2 hover:text-blue-400">
-                    <i class="fa-solid fa-bolt mr-1"></i> 直接試用
+                <button onclick="handleManualAuth()" class="w-full bg-blue-600 py-4 rounded-xl font-bold active:scale-95 transition-all">進入系統</button>
+                <div class="relative py-2 flex items-center gap-3">
+                    <hr class="flex-1 border-white/10"><span class="text-[9px] text-zinc-600 font-bold">OR</span><hr class="flex-1 border-white/10">
+                </div>
+                <button onclick="loginWithGoogle()" class="w-full bg-white text-black font-bold py-4 rounded-xl flex items-center justify-center gap-3 active:scale-95 transition-all text-sm">
+                    <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" class="w-5 h-5"> Google 登入
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- 主程式介面 -->
+    <!-- 主介面 -->
     <div id="app" class="flex-1 flex flex-col hidden">
         
-        <header class="h-16 bg-[#2b2d31] border-b border-black/20 flex items-center justify-between px-4 z-50">
-            <div class="flex items-center gap-3">
-                <button onclick="toggleDrawer(true)" class="w-10 h-10 flex items-center justify-center text-zinc-400">
+        <header class="h-14 bg-[#2b2d31] border-b border-black/20 flex items-center justify-between px-4 z-50">
+            <div class="flex items-center gap-3 overflow-hidden">
+                <button onclick="toggleDrawer(true)" class="w-10 h-10 flex-shrink-0 flex items-center justify-center text-zinc-400">
                     <i class="fa-solid fa-bars-staggered text-xl"></i>
                 </button>
-                <div class="flex flex-col">
-                    <span id="view-title" class="font-black text-sm text-zinc-100">主介面</span>
-                    <span id="view-subtitle" class="text-[9px] text-zinc-500 font-bold uppercase">Public Terminal</span>
+                <div class="flex flex-col truncate">
+                    <span id="room-title" class="font-black text-sm text-zinc-100 truncate">載入中...</span>
+                    <span class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Global Server</span>
                 </div>
             </div>
-            <button onclick="openTab('player')" class="w-10 h-10 flex items-center justify-center text-blue-400">
-                <i class="fa-solid fa-headphones"></i>
-            </button>
+            <div class="flex items-center gap-2">
+                <button onclick="openTab('player')" class="w-10 h-10 flex items-center justify-center text-blue-400">
+                    <i class="fa-solid fa-compact-disc text-lg"></i>
+                </button>
+            </div>
         </header>
 
         <main class="flex-1 relative overflow-hidden">
             <!-- 視圖: 聊天 -->
             <section id="view-chat" class="view-section">
-                <div id="chat-messages" class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 no-scrollbar"></div>
-                <div class="p-4 bg-[#313338]">
-                    <div class="bg-[#383a40] rounded-2xl px-4 flex items-center gap-3 border border-white/5 shadow-lg">
-                        <input id="msg-input" type="text" placeholder="輸入訊息..." class="flex-1 bg-transparent py-4 outline-none text-sm text-white">
-                        <button onclick="sendMsg()" class="text-blue-500 px-2"><i class="fa-solid fa-paper-plane text-xl"></i></button>
+                <div id="chat-messages" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3 no-scrollbar"></div>
+                <div class="p-3 bg-[#313338]">
+                    <div class="bg-[#383a40] rounded-2xl px-4 flex items-center gap-2 border border-white/5">
+                        <input id="msg-input" type="text" placeholder="傳送訊息..." class="flex-1 bg-transparent py-4 outline-none text-sm text-white">
+                        <button onclick="sendMsg()" class="text-blue-500 p-2"><i class="fa-solid fa-paper-plane text-xl"></i></button>
                     </div>
                 </div>
             </section>
 
             <!-- 視圖: 設定 -->
-            <section id="view-settings" class="view-section hidden-view p-8 overflow-y-auto">
+            <section id="view-settings" class="view-section hidden-view p-6 overflow-y-auto">
                 <div class="max-w-md mx-auto space-y-6">
-                    <h3 class="text-2xl font-black">帳戶設定</h3>
-                    <div class="space-y-4">
-                        <img id="set-avatar" class="w-20 h-20 rounded-2xl mx-auto border-2 border-blue-500/30" src="">
-                        <div>
-                            <label class="text-[10px] text-zinc-500 uppercase font-bold ml-1">顯示名稱</label>
-                            <input id="set-name" type="text" class="w-full bg-black/40 border border-white/5 p-4 rounded-xl text-sm mt-1 outline-none focus:border-blue-500">
+                    <h3 class="text-xl font-black italic flex items-center gap-2">
+                        <i class="fa-solid fa-gear text-blue-500"></i> 個人帳戶設定
+                    </h3>
+                    <div class="bg-black/20 rounded-3xl p-6 space-y-6 border border-white/5">
+                        <div class="flex flex-col items-center">
+                            <img id="set-avatar" class="w-20 h-20 rounded-3xl shadow-xl mb-3" src="">
+                            <p id="set-uid" class="font-mono text-[9px] text-zinc-500"></p>
                         </div>
-                        <div>
-                            <label class="text-[10px] text-zinc-500 uppercase font-bold ml-1">播放器 (SoundCloud URL)</label>
-                            <input id="set-player-url" type="text" class="w-full bg-black/40 border border-white/5 p-4 rounded-xl text-sm mt-1 outline-none focus:border-blue-500">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-[10px] text-zinc-500 font-bold uppercase ml-1">顯示名稱</label>
+                                <input id="set-name" type="text" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-sm mt-1 outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-zinc-500 font-bold uppercase ml-1">SoundCloud 歌單連結</label>
+                                <input id="set-player-url" type="text" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-sm mt-1 outline-none focus:border-blue-500">
+                            </div>
                         </div>
-                        <button onclick="saveProfile()" class="w-full bg-blue-600 py-4 rounded-xl font-bold shadow-lg">儲存變更</button>
-                        <button onclick="logout()" class="w-full text-zinc-600 text-[10px] font-bold uppercase py-4">退出登入</button>
+                        <button onclick="saveProfile()" class="w-full bg-blue-600 py-4 rounded-xl font-bold shadow-lg">儲存並同步</button>
                     </div>
+                    <button onclick="logout()" class="w-full text-zinc-500 text-[10px] font-black uppercase py-4">中斷連線</button>
                 </div>
             </section>
 
             <!-- 視圖: 播放器 -->
             <section id="view-player" class="view-section hidden-view bg-[#1e1f22] items-center justify-center p-6">
-                <div class="w-full max-w-sm glass p-6 rounded-[2.5rem] shadow-2xl">
-                    <div class="aspect-square rounded-3xl overflow-hidden bg-black mb-6">
+                <div class="w-full max-w-sm glass p-6 rounded-[2.5rem] flex flex-col items-center">
+                    <div class="w-full flex justify-between items-center mb-6">
+                        <span class="text-[9px] font-black text-blue-500 tracking-widest">VIP PLAYER v5</span>
+                        <div class="flex gap-1"><div class="w-1 h-3 bg-blue-500 animate-bounce"></div><div class="w-1 h-3 bg-blue-500 animate-bounce" style="animation-delay: 0.1s"></div></div>
+                    </div>
+                    <div class="w-full aspect-square rounded-3xl overflow-hidden bg-black mb-6 border border-white/5">
                         <iframe id="sc-iframe" width="100%" height="100%" scrolling="no" frameborder="no" allow="autoplay" src=""></iframe>
                     </div>
-                    <div class="flex justify-center gap-6">
-                        <button class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center"><i class="fa-solid fa-backward-step"></i></button>
-                        <button class="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-xl"><i class="fa-solid fa-play"></i></button>
-                        <button class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center"><i class="fa-solid fa-forward-step"></i></button>
-                    </div>
+                    <p class="text-xs text-zinc-500 mb-4 text-center px-4 italic">您可以在「個人設定」中更換 SoundCloud 網址</p>
                 </div>
             </section>
         </main>
 
-        <!-- 側邊抽屜 -->
-        <div id="drawer-overlay" onclick="toggleDrawer(false)" class="fixed inset-0 drawer-overlay opacity-0 pointer-events-none z-[90]"></div>
-        <aside id="side-drawer" class="fixed top-0 left-0 bottom-0 w-72 bg-[#2b2d31] -translate-x-full shadow-2xl flex flex-col z-[100]">
-            <div class="p-8 border-b border-black/10 flex items-center gap-3">
-                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg"><i class="fa-solid fa-crown text-white"></i></div>
-                <h4 class="font-black italic">VIP MENU</h4>
+        <!-- 側邊漢堡抽屜 -->
+        <div id="drawer-overlay" onclick="toggleDrawer(false)" class="fixed inset-0 drawer-overlay z-[90]"></div>
+        <aside id="side-drawer" class="fixed top-0 left-0 bottom-0 w-72 bg-[#2b2d31] -translate-x-full shadow-2xl flex z-[100]">
+            <!-- 伺服器列表 (左側細條) -->
+            <div class="w-16 flex-shrink-0 bg-[#1e1f22] flex flex-col items-center py-4 gap-3 border-r border-black/20 overflow-y-auto no-scrollbar">
+                <div class="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center mb-2 shadow-lg"><i class="fa-solid fa-crown text-white text-xs"></i></div>
+                <div class="w-8 h-px bg-white/10 mb-1"></div>
+                <!-- 伺服器渲染區 -->
+                <div id="room-list-sidebar" class="flex flex-col gap-3"></div>
             </div>
-            <nav class="flex-1 p-4 space-y-2 mt-4">
-                <button onclick="openTab('chat')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-2xl bg-white/5 text-zinc-100 font-bold"><i class="fa-solid fa-comments text-blue-500"></i> 主介面</button>
-                <button onclick="openTab('settings')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-2xl text-zinc-400 font-bold"><i class="fa-solid fa-user-gear"></i> 個人設定</button>
-                <button onclick="openTab('player')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-2xl text-zinc-400 font-bold"><i class="fa-solid fa-music"></i> 播放器</button>
-            </nav>
-            <div class="p-6 bg-[#232428] flex items-center gap-3">
-                <img id="dr-avatar" class="w-10 h-10 rounded-full" src="">
-                <div class="overflow-hidden">
-                    <p id="dr-name" class="text-xs font-black truncate">User</p>
-                    <p class="text-[9px] text-green-500 font-bold uppercase">Verified</p>
+
+            <!-- 選單內容 (右側大區) -->
+            <div class="flex-1 flex flex-col bg-[#2b2d31]">
+                <div class="p-6 border-b border-black/10">
+                    <h4 class="font-black italic tracking-tighter text-lg">VIP TERMINAL</h4>
+                    <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Global Access</p>
+                </div>
+                
+                <nav class="flex-1 py-4 flex flex-col">
+                    <div class="px-4 mb-2 text-[10px] font-black text-zinc-500 uppercase tracking-widest">系統功能</div>
+                    <button onclick="openTab('chat')" id="nav-chat" class="nav-btn px-6 py-4 flex items-center gap-4 text-zinc-400 font-bold"><i class="fa-solid fa-comments"></i> 聊天大廳</button>
+                    <button onclick="openTab('settings')" id="nav-settings" class="nav-btn px-6 py-4 flex items-center gap-4 text-zinc-400 font-bold"><i class="fa-solid fa-user-gear"></i> 個人設定</button>
+                    <button onclick="openTab('player')" id="nav-player" class="nav-btn px-6 py-4 flex items-center gap-4 text-zinc-400 font-bold"><i class="fa-solid fa-music"></i> 播放器</button>
+                    
+                    <div class="px-4 mt-6 mb-2 text-[10px] font-black text-zinc-500 uppercase tracking-widest">快速加入房間</div>
+                    <div id="room-list-menu" class="px-2 space-y-1"></div>
+                </nav>
+
+                <div class="p-4 bg-[#232428] mt-auto border-t border-black/10">
+                    <div class="flex items-center gap-3">
+                        <img id="dr-avatar" class="w-10 h-10 rounded-full border border-white/10" src="">
+                        <div class="overflow-hidden">
+                            <p id="dr-name" class="text-sm font-black truncate">User</p>
+                            <p class="text-[9px] text-green-500 font-bold uppercase">Online</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </aside>
@@ -170,129 +202,120 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        let profile = { name: '訪客', player: 'https://m.soundcloud.com/unapersona-519011028/sets/forsken-ost' };
-        let currentUID = null;
+        let profile = { 
+            name: '訪客', 
+            player: 'https://m.soundcloud.com/unapersona-519011028/sets/forsken-ost' 
+        };
+        
+        // 預設全球房間
+        const globalRooms = [
+            { id: 'lobby', name: '公共大廳', icon: 'fa-comments' },
+            { id: 'vip_only', name: 'VIP 特區', icon: 'fa-gem' },
+            { id: 'dev_dev', name: '開發者頻道', icon: 'fa-code' }
+        ];
+        let currentRoomId = 'lobby';
 
-        // --- 初始化 & 攔截修復 ---
-        onAuthStateChanged(auth, async (u) => {
-            if (u) {
-                currentUID = u.uid;
-                await fetchProfile();
-                showApp();
+        // --- Auth 核心 ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                await syncProfile(user);
+                initApp();
             } else {
                 showLogin();
             }
-            hideLoader();
+            document.getElementById('loader').classList.add('hidden');
         });
 
-        function showApp() {
+        async function syncProfile(user) {
+            const d = await getDoc(doc(db, "user_profiles", user.uid));
+            if (d.exists()) {
+                profile = d.data();
+            } else {
+                // 如果是 Google 登入，抓取 Google 資訊
+                profile.name = user.displayName || "使用者_" + user.uid.slice(0,4);
+                await setDoc(doc(db, "user_profiles", user.uid), profile);
+            }
+            updateUI();
+        }
+
+        function initApp() {
             document.getElementById('login-page').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
-            updateUI();
+            renderRooms();
+            switchRoom('lobby');
             openTab('chat');
-            listenChat();
         }
 
         function showLogin() {
-            document.getElementById('login-page').classList.remove('hidden');
             document.getElementById('app').classList.add('hidden');
+            document.getElementById('login-page').classList.remove('hidden');
         }
 
-        function hideLoader() {
-            document.getElementById('loader').classList.add('hidden');
-        }
-
-        // --- 驗證邏輯 ---
+        // --- 手動與 Google 登入 ---
         window.handleManualAuth = async () => {
             const name = document.getElementById('auth-user').value.trim();
             const pass = document.getElementById('auth-pass').value.trim();
-            if(!name || !pass) return alert("請輸入資訊");
-            
-            document.getElementById('loader').classList.remove('hidden');
+            if(!name || !pass) return alert("請填寫");
             try {
                 const userRef = doc(db, "vip_users", name);
                 const snap = await getDoc(userRef);
-                if(snap.exists() && snap.data().pw !== pass) {
-                    hideLoader();
-                    return alert("密碼錯誤");
-                }
-                if(!snap.exists()) await setDoc(userRef, { pw: pass });
+                if (snap.exists() && snap.data().pw !== pass) return alert("密碼錯");
+                if (!snap.exists()) await setDoc(userRef, { pw: pass });
                 
+                await signInAnonymously(auth);
                 profile.name = name;
-                await signInAnonymously(auth);
                 await setDoc(doc(db, "user_profiles", auth.currentUser.uid), profile);
-            } catch(e) { console.error(e); hideLoader(); }
+            } catch(e) { console.error(e); }
         };
 
-        window.startGuestSession = async () => {
-            document.getElementById('loader').classList.remove('hidden');
-            try {
-                await signInAnonymously(auth);
-                profile.name = "Guest_" + Math.random().toString(36).substring(7);
-                showApp();
-            } catch(e) { console.error(e); hideLoader(); }
-        };
+        window.loginWithGoogle = () => signInWithPopup(auth, provider).catch(e => console.error(e));
 
-        window.loginWithGoogle = () => signInWithPopup(auth, provider);
+        // --- 房間管理 ---
+        function renderRooms() {
+            const side = document.getElementById('room-list-sidebar');
+            const menu = document.getElementById('room-list-menu');
+            side.innerHTML = ''; menu.innerHTML = '';
 
-        async function fetchProfile() {
-            if(!auth.currentUser) return;
-            const d = await getDoc(doc(db, "user_profiles", auth.currentUser.uid));
-            if(d.exists()) profile = d.data();
+            globalRooms.forEach(r => {
+                // 側邊欄按鈕
+                const sBtn = document.createElement('button');
+                sBtn.className = `server-btn w-11 h-11 flex items-center justify-center text-zinc-400 bg-[#313338] hover:bg-[#5865f2] hover:text-white transition-all overflow-hidden ${currentRoomId === r.id ? 'active' : ''}`;
+                sBtn.innerHTML = `<i class="fa-solid ${r.icon}"></i>`;
+                sBtn.onclick = () => { switchRoom(r.id); toggleDrawer(false); };
+                side.appendChild(sBtn);
+
+                // 選單內列表
+                const mBtn = document.createElement('button');
+                mBtn.className = `w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all ${currentRoomId === r.id ? 'bg-white/10 text-white' : 'text-zinc-500 hover:bg-white/5'}`;
+                mBtn.innerHTML = `<i class="fa-solid ${r.icon} mr-3"></i> ${r.name}`;
+                mBtn.onclick = () => { switchRoom(r.id); toggleDrawer(false); };
+                menu.appendChild(mBtn);
+            });
         }
 
-        function updateUI() {
-            const photo = `https://ui-avatars.com/api/?name=${profile.name}&background=5865f2&color=fff&bold=true`;
-            document.getElementById('dr-avatar').src = photo;
-            document.getElementById('set-avatar').src = photo;
-            document.getElementById('dr-name').innerText = profile.name;
-            document.getElementById('set-name').value = profile.name;
-            document.getElementById('set-player-url').value = profile.player;
-            document.getElementById('sc-iframe').src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(profile.player)}&color=%235865f2&auto_play=false&visual=true`;
+        let chatUnsub = null;
+        function switchRoom(id) {
+            currentRoomId = id;
+            const room = globalRooms.find(r => r.id === id);
+            document.getElementById('room-title').innerText = room.name;
+            renderRooms();
+            listenChat(id);
         }
 
-        // --- 導航 ---
-        window.toggleDrawer = (show) => {
-            const drawer = document.getElementById('side-drawer');
-            const overlay = document.getElementById('drawer-overlay');
-            if(show) {
-                drawer.classList.add('drawer-open');
-                overlay.classList.remove('pointer-events-none');
-                overlay.style.opacity = '1';
-            } else {
-                drawer.classList.remove('drawer-open');
-                overlay.classList.add('pointer-events-none');
-                overlay.style.opacity = '0';
-            }
-        };
-
-        window.openTab = (tabId) => {
-            const sections = { chat: 'view-chat', settings: 'view-settings', player: 'view-player' };
-            const titles = { chat: '主介面', settings: '帳戶中心', player: '音樂播放器' };
-            
-            Object.values(sections).forEach(id => document.getElementById(id).classList.add('hidden-view'));
-            document.getElementById(sections[tabId]).classList.remove('hidden-view');
-            document.getElementById('view-title').innerText = titles[tabId];
-            
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('bg-white/5', 'text-zinc-100'));
-            toggleDrawer(false);
-        };
-
-        // --- 聊天 ---
-        let chatSub = null;
-        function listenChat() {
-            if(chatSub) chatSub();
-            const q = query(collection(db, "public_chats/lobby/messages"), orderBy("time", "asc"));
-            chatSub = onSnapshot(q, (snap) => {
+        // --- 聊天邏輯 ---
+        function listenChat(roomId) {
+            if (chatUnsub) chatUnsub();
+            const q = query(collection(db, `global_rooms/${roomId}/messages`), orderBy("time", "asc"));
+            chatUnsub = onSnapshot(q, (snap) => {
                 const box = document.getElementById('chat-messages');
                 box.innerHTML = '';
                 snap.forEach(d => {
                     const m = d.data();
-                    const isMe = m.uid === currentUID;
+                    const isMe = m.uid === auth.currentUser.uid;
                     box.innerHTML += `
-                        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                            <span class="text-[9px] text-zinc-500 font-bold mb-1 uppercase">${m.author}</span>
-                            <div class="msg-bubble ${isMe ? 'my-msg' : 'other-msg'}">${m.text}</div>
+                        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-msg">
+                            <span class="text-[9px] text-zinc-500 font-black mb-1 px-1 uppercase">${m.author}</span>
+                            <div class="msg-bubble ${isMe ? 'my-msg' : 'other-msg'} shadow-md">${m.text}</div>
                         </div>
                     `;
                 });
@@ -302,22 +325,54 @@
 
         window.sendMsg = async () => {
             const inp = document.getElementById('msg-input');
-            if(!inp.value.trim() || !currentUID) return;
-            const text = inp.value; inp.value = '';
-            await addDoc(collection(db, "public_chats/lobby/messages"), {
-                uid: currentUID,
+            const val = inp.value.trim();
+            if(!val) return;
+            inp.value = '';
+            await addDoc(collection(db, `global_rooms/${currentRoomId}/messages`), {
+                uid: auth.currentUser.uid,
                 author: profile.name,
-                text,
+                text: val,
                 time: serverTimestamp()
             });
         };
 
+        // --- 介面 & 設定 ---
+        function updateUI() {
+            const photo = auth.currentUser?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&background=5865f2&color=fff&bold=true`;
+            document.getElementById('dr-avatar').src = photo;
+            document.getElementById('set-avatar').src = photo;
+            document.getElementById('dr-name').innerText = profile.name;
+            document.getElementById('set-name').value = profile.name;
+            document.getElementById('set-player-url').value = profile.player;
+            document.getElementById('set-uid').innerText = `ID: ${auth.currentUser?.uid || ''}`;
+            
+            const embed = `https://w.soundcloud.com/player/?url=${encodeURIComponent(profile.player)}&color=%235865f2&auto_play=false&visual=true`;
+            document.getElementById('sc-iframe').src = embed;
+        }
+
         window.saveProfile = async () => {
-            profile.name = document.getElementById('set-name').value;
-            profile.player = document.getElementById('set-player-url').value;
-            await setDoc(doc(db, "user_profiles", currentUID), profile);
+            profile.name = document.getElementById('set-name').value.trim();
+            profile.player = document.getElementById('set-player-url').value.trim();
+            await setDoc(doc(db, "user_profiles", auth.currentUser.uid), profile);
             updateUI();
-            alert("已儲存");
+            alert("雲端設定已更新");
+        };
+
+        window.toggleDrawer = (show) => {
+            const d = document.getElementById('side-drawer');
+            const o = document.getElementById('drawer-overlay');
+            if(show) { d.classList.add('drawer-open'); o.classList.add('overlay-show'); }
+            else { d.classList.remove('drawer-open'); o.classList.remove('overlay-show'); }
+        };
+
+        window.openTab = (id) => {
+            const v = { chat: 'view-chat', settings: 'view-settings', player: 'view-player' };
+            Object.values(v).forEach(s => document.getElementById(s).classList.add('hidden-view'));
+            document.getElementById(v[id]).classList.remove('hidden-view');
+            
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`nav-${id}`).classList.add('active');
+            toggleDrawer(false);
         };
 
         window.logout = () => signOut(auth).then(() => location.reload());
@@ -326,3 +381,4 @@
 </body>
 </html>
 
+    
