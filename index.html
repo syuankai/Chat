@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VIP 加密通訊系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', system-ui, sans-serif; background: #09090b; color: #fafafa; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .msg-container { height: calc(100vh - 180px); overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; }
+        .msg-container::-webkit-scrollbar { display: none; }
+        .my-msg { background: #2563eb; border-bottom-right-radius: 4px; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2); }
+        .other-msg { background: #27272a; border-bottom-left-radius: 4px; }
+        .hidden { display: none !important; }
+        #loading-overlay { z-index: 2000; background: #09090b; }
+        input:focus { border-color: #3b82f6; outline: none; }
+        .animate-pop { animation: pop 0.3s cubic-bezier(0.26, 0.53, 0.74, 1.48) forwards; }
+        @keyframes pop { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+    </style>
+</head>
+<body class="overflow-hidden">
+
+    <!-- 加載遮罩 -->
+    <div id="loading-overlay" class="fixed inset-0 flex items-center justify-
+
+      
